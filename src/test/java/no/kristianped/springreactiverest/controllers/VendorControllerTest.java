@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.BDDMockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -74,5 +75,37 @@ class VendorControllerTest {
                 .expectBody(Vendor.class)
                 .value(hasProperty("firstName", equalTo("Michael")))
                 .value(hasProperty("lastName", equalTo("Weston")));
+    }
+
+    @Test
+    void create() {
+        BDDMockito
+                .given(vendorRepository.saveAll(ArgumentMatchers.any(Publisher.class)))
+                .willReturn(Flux.just(Vendor.builder().firstName("Hei").lastName("Deg").build()));
+
+        Mono<Vendor> vendorToSave = Mono.just(Vendor.builder().firstName("AAAA").lastName("BBBB").build());
+
+        webTestClient
+                .post()
+                .uri(BASE_URL)
+                .body(vendorToSave, Vendor.class)
+                .exchange()
+                .expectStatus().isCreated();
+    }
+
+    @Test
+    void update() {
+        BDDMockito
+                .given(vendorRepository.save(ArgumentMatchers.any(Vendor.class)))
+                .willReturn(Mono.just(Vendor.builder().firstName("Hei").lastName("Der").build()));
+
+        Mono<Vendor> vendorToSave = Mono.just(Vendor.builder().firstName("AAAA").lastName("BBBB").build());
+
+        webTestClient
+                .put()
+                .uri(BASE_URL + "aasssddf")
+                .body(vendorToSave, Vendor.class)
+                .exchange()
+                .expectStatus().isOk();
     }
 }
