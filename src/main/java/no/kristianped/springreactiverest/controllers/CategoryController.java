@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @RestController
@@ -41,5 +43,18 @@ public class CategoryController {
     public Mono<Category> update(@PathVariable String id, @RequestBody Category category) {
         category.setId(id);
         return categoryRepository.save(category);
+    }
+
+    @PatchMapping("/{id}")
+    public Mono<Category> patch(@PathVariable String id, @RequestBody Category category) {
+        Mono<Category> foundCategory = categoryRepository.findById(id);
+
+        return foundCategory
+                .filter(found -> !Objects.equals(found.getDescription(), category.getDescription()))
+                .flatMap(f -> {
+                    f.setDescription(category.getDescription());
+
+                    return categoryRepository.save(f);
+                }).switchIfEmpty(foundCategory);
     }
 }

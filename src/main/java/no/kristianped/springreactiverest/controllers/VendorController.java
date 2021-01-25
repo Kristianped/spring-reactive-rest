@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @RestController
@@ -41,5 +43,32 @@ public class VendorController {
     public Mono<Vendor> update(@PathVariable String id, @RequestBody Vendor vendor) {
         vendor.setId(id);
         return vendorRepository.save(vendor);
+    }
+
+    @PatchMapping("/{id}")
+    public Mono<Vendor> patch(@PathVariable String id, @RequestBody Vendor vendor) {
+        Mono<Vendor> vendorMono = vendorRepository.findById(id);
+
+        return vendorMono
+                .filter(foundVendor -> checkIfCanPatch(vendor, foundVendor))
+                .flatMap(foundVendor -> {
+                    if (vendor.getFirstName() != null && !Objects.equals(foundVendor.getFirstName(), vendor.getFirstName()))
+                        foundVendor.setFirstName(vendor.getFirstName());
+
+                    if (vendor.getLastName() != null && !Objects.equals(foundVendor.getLastName(), vendor.getLastName()))
+                        foundVendor.setLastName(vendor.getLastName());
+
+                    return vendorRepository.save(foundVendor);
+                }).switchIfEmpty(vendorMono);
+    }
+
+    private boolean checkIfCanPatch(Vendor vendor, Vendor foundVendor) {
+        if (vendor.getFirstName() != null && !Objects.equals(foundVendor.getFirstName(), vendor.getFirstName()))
+            return true;
+
+        if (vendor.getLastName() != null && !Objects.equals(foundVendor.getLastName(), vendor.getLastName()))
+            return true;
+
+        return false;
     }
 }

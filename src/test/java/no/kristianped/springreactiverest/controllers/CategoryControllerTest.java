@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.BDDMockito;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,5 +90,50 @@ class CategoryControllerTest {
                 .exchange()
                 .expectStatus().isOk();
 
+
+    }
+
+    @Test
+    void patch() {
+        Category category = Category.builder().description("Cat").build();
+
+        BDDMockito.given(categoryRepository.findById(ArgumentMatchers.anyString()))
+                .willReturn(Mono.just(category));
+
+        BDDMockito.given(categoryRepository.save(ArgumentMatchers.any(Category.class)))
+                .willReturn(Mono.just(category));
+
+        Mono<Category> categoryToSave = Mono.just(Category.builder().description("Dog").build());
+
+        webTestClient
+                .patch()
+                .uri(BASE_URL + "sasasasasa")
+                .body(categoryToSave, Category.class)
+                .exchange()
+                .expectStatus().isOk();
+
+        Mockito.verify(categoryRepository).save(ArgumentMatchers.any());
+    }
+
+    @Test
+    void patchNoUpdate() {
+        Category category = Category.builder().description("Cat").build();
+
+        BDDMockito.given(categoryRepository.findById(ArgumentMatchers.anyString()))
+                .willReturn(Mono.just(category));
+
+        BDDMockito.given(categoryRepository.save(ArgumentMatchers.any(Category.class)))
+                .willReturn(Mono.just(category));
+
+        Mono<Category> categoryToSave = Mono.just(category);
+
+        webTestClient
+                .patch()
+                .uri(BASE_URL + "sasasasasa")
+                .body(categoryToSave, Category.class)
+                .exchange()
+                .expectStatus().isOk();
+
+        Mockito.verify(categoryRepository, Mockito.never()).save(ArgumentMatchers.any());
     }
 }
