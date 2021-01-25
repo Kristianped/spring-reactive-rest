@@ -5,10 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import no.kristianped.springreactiverest.domain.Category;
 import no.kristianped.springreactiverest.repositories.CategoryRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.reactivestreams.Publisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,5 +29,17 @@ public class CategoryController {
     @GetMapping("/{id}")
     public Mono<Category> getById(@PathVariable String id) {
         return categoryRepository.findById(id);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping
+    public Mono<Void> create(@RequestBody Publisher<Category> categoryPublisher) {
+        return categoryRepository.saveAll(categoryPublisher).then();
+    }
+
+    @PutMapping("/{id}")
+    public Mono<Category> update(@PathVariable String id, @RequestBody Category category) {
+        category.setId(id);
+        return categoryRepository.save(category);
     }
 }

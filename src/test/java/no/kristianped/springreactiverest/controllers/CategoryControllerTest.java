@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.BDDMockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -57,5 +58,36 @@ class CategoryControllerTest {
         webTestClient.get().uri(BASE_URL + "hello")
                 .exchange()
                 .expectBody(Category.class);
+    }
+
+    @Test
+    void create() {
+        BDDMockito.given(categoryRepository.saveAll(ArgumentMatchers.any(Publisher.class)))
+                .willReturn(Flux.just(Category.builder().description("Cat").build()));
+
+        Mono<Category> categoryToSave = Mono.just(Category.builder().description("Dog").build());
+
+        webTestClient
+                .post()
+                .uri(BASE_URL)
+                .body(categoryToSave, Category.class)
+                .exchange()
+                .expectStatus().isCreated();
+    }
+
+    @Test
+    void update() {
+        BDDMockito.given(categoryRepository.save(ArgumentMatchers.any(Category.class)))
+                .willReturn(Mono.just(Category.builder().description("Cat").build()));
+
+        Mono<Category> categoryToSave = Mono.just(Category.builder().description("Dog").build());
+
+        webTestClient
+                .put()
+                .uri(BASE_URL + "sasasasasa")
+                .body(categoryToSave, Category.class)
+                .exchange()
+                .expectStatus().isOk();
+
     }
 }
